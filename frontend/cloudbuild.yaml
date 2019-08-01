@@ -1,0 +1,60 @@
+steps:
+# This step builds the container image.
+- name: 'gcr.io/cloud-builders/docker'
+  dir: frontend
+  id: Build
+  args:
+    - 'build'
+    - '-f'
+    - 'src/main/docker/Dockerfile.jvm'
+    - '-t'
+    - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
+    - '.'
+
+# This step pushes the image to Container Registry
+# The PROJECT_ID and SHORT_SHA variables are automatically
+# replaced by Cloud Build.
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push
+  args:
+    - 'push'
+    - 'gcr.io/$PROJECT_ID/frontend:$SHORT_SHA'
+# This step clones the hello-cloudbuild-env repository
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Clone env repository
+  entrypoint: /bin/sh
+  args:
+    - '-c'
+    - |
+      gcloud source repos clone canary-env && \
+      cd canary-env && \
+      git checkout candidate && \
+      git config user.email $(gcloud auth list --filter=status:ACTIVE --format='value(account)')
+
+  # This step generates the new manifest
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Generate manifest
+  entrypoint: /bin/sh
+  args:
+    - '-c'
+    - |
+      find canary-env/frontend -type f ! -name k8s-frontend-master.yaml -exec rm {} + && \
+      sed "s/GOOGLE_CLOUD_PROJECT/${PROJECT_ID}/g" frontend/k8s.yaml.tpl | \
+      sed "s/BRANCH_NAME/${BRANCH_NAME}/g"| \
+      sed "s/COMMIT_SHA/${SHORT_SHA}/g" > canary-env/frontend/k8s-frontend-${BRANCH_NAME}.yaml
+
+  # This step pushes the manifest back to hello-cloudbuild-env
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Push manifest
+  entrypoint: /bin/sh
+  args:
+    - '-c'
+    - |
+      set -x && \
+      cd canary-env && \
+      git add frontend && \
+      git commit -m "Deploying image gcr.io/${PROJECT_ID}/frontend:${SHORT_SHA}
+      Built from commit ${COMMIT_SHA} of repository canary-example on branch ${BRANCH_NAME}
+      Author: $(git log --format='%an <%ae>' -n 1 HEAD)" && \
+      git push origin candidate
+timeout: 720s
