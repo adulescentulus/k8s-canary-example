@@ -1,7 +1,7 @@
 package de.networkchallenge.howto.canary.rectangle.svg;
 
 public enum Shape {
-    RECTANGLE("<rect width=\"200\" height=\"100\" style=\"fill:green;\" />"),
+    RECTANGLE("<rect width=\"200\" height=\"100\" style=\"fill:blue;\" />"),
     CIRCLE("<circle cx=\"50\" cy=\"50\" r=\"40\" stroke=\"green\" stroke-width=\"3\" fill=\"green\" />");
 
     private final String xml;

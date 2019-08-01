@@ -17,7 +17,7 @@ class LocalSvgResourceTest {
                 .when().get("/local/svg/RECTANGLE/1")
                 .then()
                 .statusCode(200)
-                .body(containsString("<rect width=\"200\" height=\"100\" style=\"fill:green;\" />"));
+                .body(containsString("<rect width=\"200\" height=\"100\" style=\"fill:blue;\" />"));
     }
 
     @Test
@@ -35,7 +35,7 @@ class LocalSvgResourceTest {
                 .when().get("/local/json/RECTANGLE/1")
                 .then()
                 .statusCode(200)
-                .body(containsString("<rect width=\\\"200\\\" height=\\\"100\\\" style=\\\"fill:green;\\\" />"));
+                .body(containsString("<rect width=\\\"200\\\" height=\\\"100\\\" style=\\\"fill:blue;\\\" />"));
     }
 
     @Test
